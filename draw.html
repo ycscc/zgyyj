@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>小卡抽卡机</title>
+<title>中国音乐剧小卡抽卡机</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 /* 淡入动画 */
@@ -14,6 +14,10 @@
 .fade-in {
   animation: fadeIn 0.6s ease forwards;
 }
+.fade-in-delay-1 { animation-delay: 0.15s; }
+.fade-in-delay-2 { animation-delay: 0.3s; }
+.fade-in-delay-3 { animation-delay: 0.45s; }
+.fade-in-delay-4 { animation-delay: 0.6s; }
 
 /* 撕拉动画：左上到右下撕开 */
 .tear-wrap {
@@ -53,13 +57,16 @@
     <button class="tab-btn px-4 py-2 rounded bg-slate-700 hover:bg-slate-600" data-tab="log">记录</button>
   </div>
 
-  <!-- 板块1：抽卡 -->
+  <!-- 板块1：抽卡（新增5连抽） -->
   <div id="draw" class="tab-content active">
     <div class="bg-slate-800 rounded-xl p-6">
       <h2 class="text-xl font-semibold mb-4">抽卡</h2>
       <p class="text-slate-400 mb-4">卡池内卡片等概率抽取，抽取后自动记入图鉴</p>
-      <button id="drawBtn" class="px-6 py-2 bg-pink-500 rounded-lg hover:bg-pink-600">抽取一张</button>
-      <div id="drawResult" class="mt-6 flex justify-center">
+      <div class="flex gap-3 mb-4">
+        <button id="drawBtn" class="px-6 py-2 bg-pink-500 rounded-lg hover:bg-pink-600">单抽一张</button>
+        <button id="draw5Btn" class="px-6 py-2 bg-rose-600 rounded-lg hover:bg-rose-700">5连抽</button>
+      </div>
+      <div id="drawResult" class="mt-6 flex justify-center flex-wrap gap-3">
       </div>
     </div>
   </div>
@@ -140,19 +147,48 @@ tabBtns.forEach(btn=>{
   }
 })
 
-// 抽卡（淡入）
+// 抽卡：单抽
 const drawBtn = document.getElementById("drawBtn");
+const draw5Btn = document.getElementById("draw5Btn");
 const drawResult = document.getElementById("drawResult");
+
+function drawOneCard(){
+  return cardList[Math.floor(Math.random()*cardList.length)];
+}
 drawBtn.onclick = ()=>{
-  const rand = cardList[Math.floor(Math.random()*cardList.length)];
+  const rand = drawOneCard();
   gotCards.add(rand.id);
-  addLog("普通抽卡", rand.name);
+  addLog("普通抽卡【单抽】", rand.name);
   drawResult.innerHTML = `
     <div class="fade-in">
-      <img src="${rand.img}" alt="${rand.name}" class="w-48 rounded-lg shadow-lg">
+      <img src="${rand.img}" alt="${rand.name}" class="w-40 rounded-lg shadow-lg">
       <p class="text-center mt-2">${rand.name}</p>
     </div>
   `
+}
+
+// 5连抽
+draw5Btn.onclick = ()=>{
+  drawResult.innerHTML = "";
+  const resultCards = [];
+  for(let i=0;i<5;i++){
+    const c = drawOneCard();
+    resultCards.push(c);
+    gotCards.add(c.id);
+  }
+  // 生成html，依次延迟淡入
+  let html = "";
+  resultCards.forEach((card, idx)=>{
+    const delayClass = ["","fade-in-delay-1","fade-in-delay-2","fade-in-delay-3","fade-in-delay-4"][idx];
+    html += `
+    <div class="fade-in ${delayClass}">
+      <img src="${card.img}" alt="${card.name}" class="w-40 rounded-lg shadow-lg">
+      <p class="text-center mt-2">${card.name}</p>
+    </div>
+    `
+  })
+  drawResult.innerHTML = html;
+  addLog("普通抽卡【5连抽】", resultCards.map(x=>x.name).join("、"));
 }
 
 // 抽撕拉片（左上→右下撕开动画）
